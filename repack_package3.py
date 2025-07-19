@@ -55,6 +55,14 @@ def getGitHubDirectLink(baseLink, redirLink, baseDir):
 
     return(None)
 
+def sys_exit(msg):
+    if sys.argv[0].endswith('.exe'):
+        print(msg)
+        input('Press Enter to continue...')
+        sys.exit()
+    else:
+        sys.exit(msg)
+
 def catchGitHubRedirect(baseLink):
     latestLink = f'{baseLink}/releases/latest'
     try:
@@ -90,7 +98,7 @@ def downloadAndUnpack(link):
         if response.status_code == 200:
             unpackZip(response.content, baseDir)
         else:
-            sys.exit("Error: can't download file!")
+            sys_exit("Error: can't download file!")
     except:
         pass
 
@@ -108,10 +116,10 @@ def main():
     with open(in_files[0], 'rb') as a:  # Atmosphere
         a_data = a.read()
         if not len(a_data) == 0x800000:  # размер файла должен строго совпадать
-            sys.exit(f'Error: {in_files[0]} is broken')
+            sys_exit(f'Error: {in_files[0]} is broken')
         a_head = a_data[:4]
         if not a_head == b'PK31':  # проверка на соответствие формата в заголовке
-            sys.exit(f'Error: {in_files[0]} is broken')
+            sys_exit(f'Error: {in_files[0]} is broken')
 
         # статичное значение смещения взято из упаковщика
         a_atmo_vernum = a_data[0x38:0x3C]
@@ -122,17 +130,17 @@ def main():
         a_boot_f_siz2 = bs_int32(a_data, 0x4FC)
         # необязательные проверки для дополнительной перестраховки
         if not a_boot_f_size == a_boot_f_siz2:
-            sys.exit(f'Error: {in_files[0]} is broken')
+            sys_exit(f'Error: {in_files[0]} is broken')
         if not a_boot_offset == a_boot_offse2 + 0x100000:
-            sys.exit(f'Error: {in_files[0]} is broken')
+            sys_exit(f'Error: {in_files[0]} is broken')
 
     with open(in_files[1], 'rb') as k:  # Kefir
         k_data = bytearray(k.read())
         if not len(k_data) == 0x800000:  # размер файла должен строго совпадать
-            sys.exit(f'Error: {in_files[1]} is broken')
+            sys_exit(f'Error: {in_files[1]} is broken')
         k_head = k_data[:4]
         if not k_head == b'PK31':  # проверка на соответствие формата в заголовке
-            sys.exit(f'Error: {in_files[1]} is broken')
+            sys_exit(f'Error: {in_files[1]} is broken')
 
         # статичное значение смещения взято из упаковщика
         k_atmo_vernum = k_data[0x38:0x3C]
@@ -143,13 +151,13 @@ def main():
         k_boot_f_siz2 = bs_int32(k_data, 0x4FC)
         # необязательные проверки для дополнительной перестраховки
         if not k_boot_f_size == k_boot_f_siz2:
-            sys.exit(f'Error: {in_files[1]} is broken')
+            sys_exit(f'Error: {in_files[1]} is broken')
         if not k_boot_offset == k_boot_offse2 + 0x100000:
-            sys.exit(f'Error: {in_files[1]} is broken')
+            sys_exit(f'Error: {in_files[1]} is broken')
 
     # неизвестно что будет, если версия Атмосферы не совпадёт
     if not a_atmo_vernum == k_atmo_vernum:
-        sys.exit('Error: incompatible versions')
+        sys_exit('Error: incompatible versions')
 
     # новый файл должен быть меньше или равен старому, чтобы влезть
     if not a_boot_f_size > k_boot_f_size:
@@ -165,9 +173,9 @@ def main():
         # сохраняем изменённый файл на диск как package3 рядом со скриптом
         with open('package3', 'wb') as p:
             p.write(k_data)
-        sys.exit('Done: file saved as package3')
+        sys_exit('Done: file saved as package3')
     else:
-        sys.exit('Error: not enough free space')
+        sys_exit('Error: not enough free space')
 
 if __name__ == "__main__":
     main()
