@@ -1,13 +1,18 @@
+# folders
 atm
 atmo
 kef
 kefir
 package3_out
+
+# file names
 build_package3.py
 package3
-pk31_bpatcher.exe
-pk31_bpatcher_v*.7z
 pk31_bpatcher_v*.py
-psgcompiler.exe.lnk
-readme.txt
-repack_package3.exe
+
+# file masks
+*.7z
+*.exe
+*.lnk
+*.txt
+*.zip

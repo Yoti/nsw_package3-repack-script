@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 
 import os
 import sys
@@ -71,6 +73,7 @@ def main():
     print(f'Content headers count: {ch_cnt}')
     print(f'Supported HOS version: {bs_hex32(package3, 52)} ({bs_ver32(package3, 52)})')
     print(f'Release version: {bs_hex32(package3, 56)} ({bs_ver32(package3, 56)})')
+    # в файл записываются первые восемь байт ревизии, но сам GitHub обычно отображает семь
     print(f'Git revision: {bs_hex32(package3, 60)[2:9].lower()} ({bs_hex32(package3, 60)})')
 
     basepath = f'{pk31}_out'
@@ -82,7 +85,7 @@ def main():
         f_size = bs_int32(package3, ch_off+4)
         f_name = str(package3[ch_off+16:ch_off+16+16].decode())
         f_name = f_name.rstrip("\x00")
-        print(f' {f_name.ljust(16)}{to_hex(offset, 6)} -> {to_hex(offset+f_size, 6)} ({f_size})')
+        print(f'\t{f_name.ljust(16)}{to_hex(offset, 6)} -> {to_hex(offset+f_size, 6)} ({f_size})')
 
         if i < kips_cnt:
             filepath = os.path.join(basepath, f'{f_name}.bin')
@@ -99,9 +102,9 @@ def main():
         program_id = package3[start:start+8].hex()
         file_offset = bs_hex32(package3, start+8)  # add 0x100000 to get real_offset
         file_size = bs_int32(package3, start+12)
-        print(f' {program_id}: {file_offset} ({file_size})')
+        print(f'\t{program_id}: {file_offset} ({file_size})')
         file_hash = package3[start+16:start+48].hex()
-        print(f' {file_hash}')
+        print(f'\t{file_hash}')
         start += 0x30
 
 

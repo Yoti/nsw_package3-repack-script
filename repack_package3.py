@@ -49,7 +49,6 @@ def getGitHubDirectLink(baseLink, redirLink, baseDir):
                 return(f'https://github.com{pageText}')
             except:
                 pass
-            pass
         else:
             pass
 
@@ -103,15 +102,21 @@ def downloadAndUnpack(link):
         pass
 
 def main():
-    print('PK31 BPatcher v0.3 by Yoti')
+    print('PK31 BPatcher v0.4-WIP by Yoti')
 
+    # пути до файлов с учётом заявленных в ранних версиях программы
     in_files = [os.path.join('atmo', 'package3'), os.path.join('kefir', 'package3')]
+    # файлы не найдены, применяем фишку по загрузке их из сети Интернет
     if not os.path.exists(in_files[0]):
         downloadAndUnpack('https://github.com/Atmosphere-NX/Atmosphere')
         in_files[0] = os.path.join('atm', 'atmosphere', 'package3')
     if not os.path.exists(in_files[1]):
         downloadAndUnpack('https://github.com/rashevskyv/kefir')
         in_files[1] = os.path.join('kef', 'atmosphere', 'package3')
+    # проверяем ещё раз, на всякий, что все нужные файлы есть на месте
+    for in_file in in_files:
+        if not os.path.exists(in_file):
+            sys_exit(f'Error: {in_file} is missing')
 
     with open(in_files[0], 'rb') as a:  # Atmosphere
         a_data = a.read()
@@ -157,7 +162,7 @@ def main():
 
     # неизвестно что будет, если версия Атмосферы не совпадёт
     if not a_atmo_vernum == k_atmo_vernum:
-        sys_exit('Error: incompatible versions')
+        sys_exit(f'Error: incompatible versions ({bs_ver32(a_data, 0x38)} vs {bs_ver32(k_data, 0x38)})')
 
     # новый файл должен быть меньше или равен старому, чтобы влезть
     if not a_boot_f_size > k_boot_f_size:
@@ -170,10 +175,21 @@ def main():
         # записываем данные нового файла по старому адресу
         k_data[k_boot_offset:k_boot_offset+a_boot_f_size] = a_data[a_boot_offset:a_boot_offset+a_boot_f_size]
 
-        # сохраняем изменённый файл на диск как package3 рядом со скриптом
-        with open('package3', 'wb') as p:
-            p.write(k_data)
-        sys_exit('Done: file saved as package3')
+        # сохраняем изменённый файл на диск...
+        if os.path.exists(in_files[1]):  # присутствует папка "kef"
+            # ...как package3 внутри сборки Kefir
+            if os.path.exists(in_files[1]):
+                os.remove(in_files[1])
+                with open(in_files[1], 'wb') as p:
+                    p.write(k_data)
+                sys_exit(f'Done: file saved as {in_files[1]}')
+                # создать архив Kefir999-fix.zip из содержимого папки kef
+        else:
+            # ...как package3 рядом со скриптом
+            with open('package3', 'wb') as p:
+                p.write(k_data)
+            sys_exit('Done: file saved as package3')
+
     else:
         sys_exit('Error: not enough free space')
 
