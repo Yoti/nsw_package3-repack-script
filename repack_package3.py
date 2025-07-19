@@ -1,8 +1,12 @@
 ﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import io
 import os
 import sys
+import shutil
+import requests
+from zipfile import ZipFile
 
 def bs_int32(src, start, reverse=0):
     ret = src[start:start+4]
@@ -11,23 +15,103 @@ def bs_int32(src, start, reverse=0):
     else:
         return(int.from_bytes(ret, 'big'))
 
+def bs_ver32(src, start, reverse=0):
+    ret = bs_int32(src, start, reverse)
+    ret = hex(ret)[2:]
+    ret = str(ret).zfill(8)
+    return(f'{int(ret[:2], 16)}.{int(ret[2:4], 16)}.{int(ret[4:6], 16)}.{int(ret[6:8], 16)}')
+
+def getGitHubDirectLink(baseLink, redirLink, baseDir):
+    redirLink = redirLink.replace('/tag/', '/expanded_assets/')
+    try:
+        response = requests.get(redirLink, timeout=10)
+    except:
+        pass
+    else:
+        if response.status_code == 200:
+            pageText = response.text
+            try:
+                # в тексте фрэйма нет текста github.com
+                redirLink = redirLink.replace('https://github.com', '')
+                # ссылка на файл отличается от ссылки на фрэйм
+                redirLink = redirLink.replace('/expanded_assets/', '/download/')
+                # для точности поиска добавляем начало имени файла
+                redirLink = f'{redirLink}/{baseDir}'
+                # ищем позицию начала подстроки ссылки и куска имени файла
+                retLinkStart = pageText.index(redirLink)
+                # отрезаем из текста страницы всё до этого
+                pageText = pageText[retLinkStart:]
+                # ищем в обрезанном тексте страницы конец строки по расширению
+                retLinkFinish = pageText.index('.zip') + len('.zip')
+                # вот наша итоговая ссылка без домена (текста github.com)
+                pageText = pageText[:retLinkFinish]
+                # собираем прямую ссылку из домена и конечного имени файла
+                return(f'https://github.com{pageText}')
+            except:
+                pass
+            pass
+        else:
+            pass
+
+    return(None)
+
+def catchGitHubRedirect(baseLink):
+    latestLink = f'{baseLink}/releases/latest'
+    try:
+        response = requests.get(latestLink, timeout=10, allow_redirects=False)
+        if response.status_code == 302:
+            return response.headers['location']
+        else:
+            return(None)
+    except:
+        return(None)
+
+def unpackZip(inData, outPath):
+    if os.path.exists(outPath):
+        shutil.rmtree(outPath)
+    os.makedirs(outPath, exist_ok=True)
+    with ZipFile(io.BytesIO(inData)) as z:
+        z.extractall(os.path.join(os.getcwd(), outPath))
+
+def downloadAndUnpack(link):
+    # откусываем первые три буквы из имени репозитория
+    baseDir = os.path.basename(link)[:3].lower()
+
+    # получаем ссылку на релиз из ссылки на репозиторий
+    latest = catchGitHubRedirect(link)
+    # получаем прямую ссылку на файл из ссылки на релиз
+    direct = getGitHubDirectLink(link, latest, baseDir)
+    # просто имя архива для последующего использования
+    zipName = os.path.basename(direct)
+    print(f'Info: {zipName}')
+
+    try:
+        response = requests.get(direct, timeout=10)
+        if response.status_code == 200:
+            unpackZip(response.content, baseDir)
+        else:
+            sys.exit("Error: can't download file!")
+    except:
+        pass
+
 def main():
-    print('PK31 BPatcher v0.2 by Yoti')
+    print('PK31 BPatcher v0.3 by Yoti')
 
     in_files = [os.path.join('atmo', 'package3'), os.path.join('kefir', 'package3')]
-    for i in range(len(in_files)):
-        if not os.path.exists(in_files[i]):
-            os.makedirs('atmo', exist_ok=True)
-            os.makedirs('kefir', exist_ok=True)
-            sys.exit(f'File {in_files[i]} not found!')
+    if not os.path.exists(in_files[0]):
+        downloadAndUnpack('https://github.com/Atmosphere-NX/Atmosphere')
+        in_files[0] = os.path.join('atm', 'atmosphere', 'package3')
+    if not os.path.exists(in_files[1]):
+        downloadAndUnpack('https://github.com/rashevskyv/kefir')
+        in_files[1] = os.path.join('kef', 'atmosphere', 'package3')
 
-    with open(in_files[0], 'rb') as a:  # 'atmo -> package3'
+    with open(in_files[0], 'rb') as a:  # Atmosphere
         a_data = a.read()
         if not len(a_data) == 0x800000:  # размер файла должен строго совпадать
-            sys.exit(f'{in_files[0]} is broken')
+            sys.exit(f'Error: {in_files[0]} is broken')
         a_head = a_data[:4]
         if not a_head == b'PK31':  # проверка на соответствие формата в заголовке
-            sys.exit(f'{in_files[0]} is broken')
+            sys.exit(f'Error: {in_files[0]} is broken')
 
         # статичное значение смещения взято из упаковщика
         a_atmo_vernum = a_data[0x38:0x3C]
@@ -38,17 +122,17 @@ def main():
         a_boot_f_siz2 = bs_int32(a_data, 0x4FC)
         # необязательные проверки для дополнительной перестраховки
         if not a_boot_f_size == a_boot_f_siz2:
-            sys.exit(f'{in_files[0]} is broken')
+            sys.exit(f'Error: {in_files[0]} is broken')
         if not a_boot_offset == a_boot_offse2 + 0x100000:
-            sys.exit(f'{in_files[0]} is broken')
+            sys.exit(f'Error: {in_files[0]} is broken')
 
-    with open(in_files[1], 'rb') as k:  # 'kefir -> package3'
+    with open(in_files[1], 'rb') as k:  # Kefir
         k_data = bytearray(k.read())
         if not len(k_data) == 0x800000:  # размер файла должен строго совпадать
-            sys.exit(f'{in_files[1]} is broken')
+            sys.exit(f'Error: {in_files[1]} is broken')
         k_head = k_data[:4]
         if not k_head == b'PK31':  # проверка на соответствие формата в заголовке
-            sys.exit(f'{in_files[1]} is broken')
+            sys.exit(f'Error: {in_files[1]} is broken')
 
         # статичное значение смещения взято из упаковщика
         k_atmo_vernum = k_data[0x38:0x3C]
@@ -59,9 +143,9 @@ def main():
         k_boot_f_siz2 = bs_int32(k_data, 0x4FC)
         # необязательные проверки для дополнительной перестраховки
         if not k_boot_f_size == k_boot_f_siz2:
-            sys.exit(f'{in_files[1]} is broken')
+            sys.exit(f'Error: {in_files[1]} is broken')
         if not k_boot_offset == k_boot_offse2 + 0x100000:
-            sys.exit(f'{in_files[1]} is broken')
+            sys.exit(f'Error: {in_files[1]} is broken')
 
     # неизвестно что будет, если версия Атмосферы не совпадёт
     if not a_atmo_vernum == k_atmo_vernum:
