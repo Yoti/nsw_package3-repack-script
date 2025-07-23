@@ -183,7 +183,6 @@ def main():
                 with open(in_files[1], 'wb') as p:
                     p.write(k_data)
                 sys_exit(f'Done: file saved as {in_files[1]}')
-                # создать архив Kefir999-fix.zip из содержимого папки kef
         else:
             # ...как package3 рядом со скриптом
             with open('package3', 'wb') as p:
