@@ -90,7 +90,7 @@ def downloadAndUnpack(link):
     direct = getGitHubDirectLink(link, latest, baseDir)
     # просто имя архива для последующего использования
     zipName = os.path.basename(direct)
-    print(f'Info: {zipName}')
+    print(f'Load: {zipName}')
 
     try:
         response = requests.get(direct, timeout=10)
@@ -100,9 +100,10 @@ def downloadAndUnpack(link):
             sys_exit("Error: can't download file!")
     except:
         pass
+    return os.path.splitext(zipName)[0]
 
 def main():
-    print('PK31 BPatcher v0.4-WIP by Yoti')
+    print('PK31 BPatcher v0.4 by Yoti')
 
     # пути до файлов с учётом заявленных в ранних версиях программы
     in_files = [os.path.join('atmo', 'package3'), os.path.join('kefir', 'package3')]
@@ -111,7 +112,7 @@ def main():
         downloadAndUnpack('https://github.com/Atmosphere-NX/Atmosphere')
         in_files[0] = os.path.join('atm', 'atmosphere', 'package3')
     if not os.path.exists(in_files[1]):
-        downloadAndUnpack('https://github.com/rashevskyv/kefir')
+        zipName = downloadAndUnpack('https://github.com/rashevskyv/kefir')
         in_files[1] = os.path.join('kef', 'atmosphere', 'package3')
     # проверяем ещё раз, на всякий, что все нужные файлы есть на месте
     for in_file in in_files:
@@ -182,6 +183,11 @@ def main():
                 os.remove(in_files[1])
                 with open(in_files[1], 'wb') as p:
                     p.write(k_data)
+
+                # а также делаем архив с исправленным Kefir
+                print(f'Done: output archive is {zipName}-fix.zip')
+                shutil.make_archive(f'{zipName}-fix', 'zip', 'kef')
+
                 sys_exit(f'Done: file saved as {in_files[1]}')
         else:
             # ...как package3 рядом со скриптом
