@@ -103,7 +103,7 @@ def downloadAndUnpack(link):
     return os.path.splitext(zipName)[0]
 
 def main():
-    print('PK31 BPatcher v0.4 by Yoti')
+    print('PK31 BPatcher v0.5-WIP by Yoti')
 
     # пути до файлов с учётом заявленных в ранних версиях программы
     in_files = [os.path.join('atmo', 'package3'), os.path.join('kefir', 'package3')]
@@ -184,9 +184,17 @@ def main():
                 with open(in_files[1], 'wb') as p:
                     p.write(k_data)
 
+                # заменяем файлы логотипов до кучи
+                if os.path.exists('bootlogo_kefir.bmp'):
+                    shutil.copy('bootlogo_kefir.bmp', os.path.join('kef', 'bootloader', 'bootlogo_kefir.bmp'))
+                    print('Copy: bootlogo_kefir.bmp')
+                if os.path.exists('updating.bmp'):
+                    shutil.copy('updating.bmp', os.path.join('kef', 'bootloader', 'updating.bmp'))
+                    print('Copy: updating.bmp')
+
                 # а также делаем архив с исправленным Kefir
-                print(f'Done: output archive is {zipName}-fix.zip')
                 shutil.make_archive(f'{zipName}-fix', 'zip', 'kef')
+                print(f'Done: output archive is {zipName}-fix.zip')
 
                 sys_exit(f'Done: file saved as {in_files[1]}')
         else:
