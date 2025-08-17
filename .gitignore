@@ -4,6 +4,7 @@ atmo
 kef
 kefir
 package3_out
+res
 
 # file names
 build_package3.py
@@ -12,6 +13,7 @@ pk31_bpatcher_v*.py
 
 # file masks
 *.7z
+*.bmp
 *.exe
 *.lnk
 *.txt
