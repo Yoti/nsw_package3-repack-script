@@ -15,6 +15,7 @@ pk31_bpatcher_v*.py
 *.7z
 *.bmp
 *.exe
+*.inc
 *.lnk
 *.txt
 *.zip
