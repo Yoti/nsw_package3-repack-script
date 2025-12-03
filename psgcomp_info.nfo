@@ -1,0 +1,1 @@
+--onefile --console --clean --workpath "C:/Dev/Projects/NintendoSwitch/package3-repack-script/psc_repack_package3_tmp" --distpath "C:/Dev/Projects/NintendoSwitch/package3-repack-script" --specpath "C:/Dev/Projects/NintendoSwitch/package3-repack-script" "C:/Dev/Projects/NintendoSwitch/package3-repack-script/repack_package3.py"
