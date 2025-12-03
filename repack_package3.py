@@ -103,7 +103,7 @@ def downloadAndUnpack(link):
     return os.path.splitext(zipName)[0]
 
 def main():
-    print('PK31 BPatcher v0.5-WIP by Yoti')
+    print('PK31 BPatcher v0.5 by Yoti')
 
     # пути до файлов с учётом заявленных в ранних версиях программы
     in_files = [os.path.join('atmo', 'package3'), os.path.join('kefir', 'package3')]
@@ -177,7 +177,7 @@ def main():
         k_data[k_boot_offset:k_boot_offset+a_boot_f_size] = a_data[a_boot_offset:a_boot_offset+a_boot_f_size]
 
         # сохраняем изменённый файл на диск...
-        if os.path.exists(in_files[1]):  # присутствует папка "kef"
+        if not os.path.exists(os.path.join('kefir', 'package3')):  # присутствует папка "kef"
             # ...как package3 внутри сборки Kefir
             if os.path.exists(in_files[1]):
                 os.remove(in_files[1])
@@ -194,9 +194,8 @@ def main():
 
                 # а также делаем архив с исправленным Kefir
                 shutil.make_archive(f'{zipName}-fix', 'zip', 'kef')
-                print(f'Done: output archive is {zipName}-fix.zip')
-
-                sys_exit(f'Done: file saved as {in_files[1]}')
+                print(f'Done: built output archive {zipName}-fix.zip')
+                sys_exit(f'Done: file also saved as {in_files[1]}')
         else:
             # ...как package3 рядом со скриптом
             with open('package3', 'wb') as p:
