@@ -8,6 +8,8 @@ import shutil
 import requests
 from zipfile import ZipFile
 
+DEBUG = 0
+
 def bs_int32(src, start, reverse=0):
     ret = src[start:start+4]
     if not reverse:
@@ -22,6 +24,9 @@ def bs_ver32(src, start, reverse=0):
     return(f'{int(ret[:2], 16)}.{int(ret[2:4], 16)}.{int(ret[4:6], 16)}.{int(ret[6:8], 16)}')
 
 def getGitHubDirectLink(baseLink, redirLink, baseDir):
+    if DEBUG:
+        print('getGitHubDirectLink()')
+
     redirLink = redirLink.replace('/tag/', '/expanded_assets/')
     try:
         response = requests.get(redirLink, timeout=10)
@@ -33,24 +38,46 @@ def getGitHubDirectLink(baseLink, redirLink, baseDir):
             try:
                 # в тексте фрэйма нет текста github.com
                 redirLink = redirLink.replace('https://github.com', '')
+                if DEBUG:
+                    print('redirLink', redirLink)
                 # ссылка на файл отличается от ссылки на фрэйм
                 redirLink = redirLink.replace('/expanded_assets/', '/download/')
+                if DEBUG:
+                    print('redirLink', redirLink)
                 # для точности поиска добавляем начало имени файла
                 redirLink = f'{redirLink}/{baseDir}'
+                if DEBUG:
+                    print('redirLink', redirLink)
                 # ищем позицию начала подстроки ссылки и куска имени файла
                 retLinkStart = pageText.index(redirLink)
+                if DEBUG:
+                    print('retLinkStart', retLinkStart)
                 # отрезаем из текста страницы всё до этого
                 pageText = pageText[retLinkStart:]
+                if DEBUG:
+                    print(f'pageText[{len(pageText)}] {pageText[:64]}~~~')
                 # ищем в обрезанном тексте страницы конец строки по расширению
                 retLinkFinish = pageText.index('.zip') + len('.zip')
+                if DEBUG:
+                    print('retLinkFinish', retLinkFinish)
                 # вот наша итоговая ссылка без домена (текста github.com)
                 pageText = pageText[:retLinkFinish]
+                if DEBUG:
+                    print(f'pageText[{len(pageText)}] ~~~{pageText[-64:]}')
+                # дополнительно ищем начало ссылки обратно от позиции конца
+                retLinkStart = pageText.rindex(redirLink)
+                pageText = pageText[retLinkStart:]
+                if DEBUG:
+                    print(f'pageText[{len(pageText)}] ~~~{pageText[-64:]}')
                 # собираем прямую ссылку из домена и конечного имени файла
                 return(f'https://github.com{pageText}')
             except:
                 pass
         else:
             pass
+
+    if DEBUG:
+        print('')
 
     return(None)
 
@@ -81,15 +108,31 @@ def unpackZip(inData, outPath):
         z.extractall(os.path.join(os.getcwd(), outPath))
 
 def downloadAndUnpack(link):
+    if DEBUG:
+        print('downloadAndUnpack()')
+
     # откусываем первые три буквы из имени репозитория
     baseDir = os.path.basename(link)[:3].lower()
+    if DEBUG:
+        print('baseDir', baseDir)
 
     # получаем ссылку на релиз из ссылки на репозиторий
     latest = catchGitHubRedirect(link)
+    if DEBUG:
+        print('latest', latest)
     # получаем прямую ссылку на файл из ссылки на релиз
     direct = getGitHubDirectLink(link, latest, baseDir)
+    if DEBUG:
+        if len(direct) < 136:
+            print(f'direct[{len(direct)}]', direct)
+        else:
+            print('Error: link too long!')
+            print(f'direct[{len(direct)}]', direct[:32])
+            print(f'direct[{len(direct)}]', direct[-32:])
     # просто имя архива для последующего использования
     zipName = os.path.basename(direct)
+    if DEBUG:
+        print('zipName', zipName)
     print(f'Load: {zipName}')
 
     try:
@@ -100,10 +143,14 @@ def downloadAndUnpack(link):
             sys_exit("Error: can't download file!")
     except:
         pass
+
+    if DEBUG:
+        print('')
+
     return os.path.splitext(zipName)[0]
 
 def main():
-    print('PK31 BPatcher v0.5 by Yoti')
+    print('PK31 BPatcher v0.6 by Yoti')
 
     # пути до файлов с учётом заявленных в ранних версиях программы
     in_files = [os.path.join('atmo', 'package3'), os.path.join('kefir', 'package3')]
