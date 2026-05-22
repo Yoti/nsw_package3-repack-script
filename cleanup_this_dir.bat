@@ -4,6 +4,6 @@ echo %~n0 by Yoti
 for /d %%d in (atm, atmo, kef, kefir, package3_out) do (
 	rd /s /q %%d
 )
-for %%f in (package3, *-fix.zip) do (
+for %%f in (package3, *.7z, *-fix.zip) do (
 	del /q %%f
 )

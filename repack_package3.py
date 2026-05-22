@@ -124,11 +124,11 @@ def downloadAndUnpack(link):
     direct = getGitHubDirectLink(link, latest, baseDir)
     if DEBUG:
         if len(direct) < 136:
-            print(f'direct[{len(direct)}]', direct)
+            print(f'direct[{len(direct)}] {direct}')
         else:
             print('Error: link too long!')
-            print(f'direct[{len(direct)}]', direct[:32])
-            print(f'direct[{len(direct)}]', direct[-32:])
+            print(f'direct[{len(direct)}] {direct[:32]}')
+            print(f'direct[{len(direct)}] {direct[-32:]}')
     # просто имя архива для последующего использования
     zipName = os.path.basename(direct)
     if DEBUG:
